@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import com.dotcms.filters.interceptor.Result;
 import com.dotcms.filters.interceptor.WebInterceptor;
+import com.dotmarketing.util.Logger;
 import com.dotmarketing.util.UtilMethods;
 import com.google.common.collect.ImmutableMap;
 import io.vavr.control.Try;
@@ -60,7 +61,9 @@ public class GraphqlCacheWebInterceptor implements WebInterceptor {
         final String query = (String) request.getAttribute(GRAPHQL_QUERY);
 
         if (response instanceof MockHttpCaptureResponse && UtilMethods.isSet(query)) {
+
             final MockHttpCaptureResponse mockResponse = (MockHttpCaptureResponse) response;
+            response.setHeader("x-graphql-cache", "miss, writing to cache");
             final String graphqlResonse = mockResponse.writer.toString();
             Try.run(() -> mockResponse.originalResponse.getWriter().write(graphqlResonse));
             graphCache.put(query, graphqlResonse);
@@ -76,6 +79,7 @@ public class GraphqlCacheWebInterceptor implements WebInterceptor {
                         .put("access-control-allow-headers", "*")
                         .put("access-control-allow-methods", "GET,PUT,POST,DELETE,HEAD,OPTIONS,PATCH")
                         .put("access-control-expose-headers", "*")
+                        .put("x-graphql-cache", "hit")
                         .build();
 
 
